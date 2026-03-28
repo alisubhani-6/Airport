@@ -1,0 +1,13 @@
+{% if status == 'landing' %}
+  <span class="atc-badge badge-landing"><i class="bi bi-arrow-down-right"></i> Landing</span>
+{% elif status == 'takeoff' %}
+  <span class="atc-badge badge-takeoff"><i class="bi bi-arrow-up-right"></i> Takeoff</span>
+{% elif status == 'StandBy' %}
+  <span class="atc-badge badge-standby"><i class="bi bi-clock"></i> Standby</span>
+{% elif status == 'Landed' %}
+  <span class="atc-badge badge-landed"><i class="bi bi-check-lg"></i> Landed</span>
+{% elif status == 'Departed' %}
+  <span class="atc-badge badge-departed"><i class="bi bi-send"></i> Departed</span>
+{% elif status == 'Cancelled' %}
+  <span class="atc-badge badge-cancelled"><i class="bi bi-x-lg"></i> Cancelled</span>
+{% endif %}

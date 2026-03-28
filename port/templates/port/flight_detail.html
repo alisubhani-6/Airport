@@ -1,0 +1,105 @@
+{% extends 'port/base.html' %}
+{% block title %}FL{{ flight.flight_id }} — ATC{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">FLIGHT <span style="color:var(--amber)">{{ flight.flight_id }}</span>
+      <small>{{ flight.airline }} — detailed record</small>
+    </h1>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'flight_list' %}" class="btn-atc btn-ghost"><i class="bi bi-arrow-left"></i> BACK</a>
+    {% if flight.is_pending %}
+    <a href="{% url 'cancel_flight' flight.pk %}" class="btn-atc btn-red"><i class="bi bi-x-circle"></i> CANCEL</a>
+    {% endif %}
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+
+  <!-- Flight Info -->
+  <div class="atc-card">
+    <div class="atc-card-header"><span class="dot"></span> FLIGHT DETAILS</div>
+    {% if flight.emergency %}
+    <div style="background:var(--red-glow); border:1px solid rgba(239,68,68,0.4); border-radius:6px; padding:8px 12px; margin-bottom:14px; font-size:12px; color:var(--red); display:flex; align-items:center; gap:8px;">
+      <i class="bi bi-exclamation-octagon-fill"></i> This flight is marked as EMERGENCY — prioritised in queue.
+    </div>
+    {% endif %}
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+      <div>
+        <div class="atc-label">Flight ID</div>
+        <div class="mono" style="font-size:20px; color:var(--amber);">FL{{ flight.flight_id }}</div>
+      </div>
+      <div>
+        <div class="atc-label">Airline</div>
+        <div style="font-size:15px; font-weight:600; color:var(--text-primary);">{{ flight.airline }}</div>
+      </div>
+      <div>
+        <div class="atc-label">Status</div>
+        <div>{% include 'port/_status_badge.html' with status=flight.status %}</div>
+      </div>
+      <div>
+        <div class="atc-label">Runway</div>
+        <div class="mono" style="color:var(--cyan);">RWY {{ flight.runway_id }}</div>
+      </div>
+      <div>
+        <div class="atc-label">Scheduled Time</div>
+        <div class="mono" style="font-size:18px; color:var(--text-primary);">{{ flight.formatted_time }}</div>
+      </div>
+      <div>
+        <div class="atc-label">Emergency</div>
+        {% if flight.emergency %}
+        <span class="atc-badge badge-emergency"><i class="bi bi-exclamation-circle"></i> YES</span>
+        {% else %}
+        <span style="color:var(--text-muted); font-size:12px;">None declared</span>
+        {% endif %}
+      </div>
+      <div>
+        <div class="atc-label">Added</div>
+        <div style="font-size:12px; color:var(--text-secondary);">{{ flight.created_at|date:"d M Y, H:i" }}</div>
+      </div>
+      {% if flight.processed_at %}
+      <div>
+        <div class="atc-label">Processed</div>
+        <div style="font-size:12px; color:var(--text-secondary);">{{ flight.processed_at|date:"d M Y, H:i" }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="atc-card">
+    <div class="atc-card-header"><span class="dot" style="background:var(--green)"></span> STATUS HISTORY</div>
+    {% if logs %}
+    <div class="timeline">
+      {% for log in logs %}
+      <div class="timeline-item">
+        <div class="tl-time">{{ log.timestamp|date:"d M, H:i:s" }}</div>
+        <div class="tl-label">
+          <span style="color:var(--text-muted)">{{ log.old_status }}</span>
+          <span style="color:var(--amber);"> → </span>
+          <span style="color:var(--text-primary); font-weight:500;">{{ log.new_status }}</span>
+        </div>
+        {% if log.message %}
+        <div class="tl-msg">{{ log.message }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="color:var(--text-muted); font-size:12px; padding:12px 0;">No status changes logged yet.</div>
+    {% endif %}
+  </div>
+
+</div>
+
+<style>
+@media (max-width: 640px) {
+  div[style*="grid-template-columns: 1fr 1fr"] {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+}
+</style>
+{% endblock %}

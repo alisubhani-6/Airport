@@ -1,0 +1,150 @@
+{% extends 'port/base.html' %}
+{% block title %}Queues — ATC{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">FLIGHT QUEUES
+    <small>Priority-ordered landing, takeoff and standby queues</small>
+  </h1>
+  <div class="page-actions">
+    <form method="post" action="{% url 'process_landing' %}" style="margin:0;">
+      {% csrf_token %}
+      <button class="btn-atc btn-amber"><i class="bi bi-arrow-down-circle"></i> <span class="btn-text">PROCESS </span>LANDING</button>
+    </form>
+    <form method="post" action="{% url 'process_takeoff' %}" style="margin:0;">
+      {% csrf_token %}
+      <button class="btn-atc btn-blue"><i class="bi bi-arrow-up-circle"></i> <span class="btn-text">PROCESS </span>TAKEOFF</button>
+    </form>
+  </div>
+</div>
+
+<div class="grid-3-queues">
+
+  <!-- Landing Queue -->
+  <div class="atc-card">
+    <div class="atc-card-header">
+      <span class="dot" style="background:var(--amber)"></span>
+      LANDING QUEUE
+      <span style="margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--amber);">{{ landing_flights|length }}</span>
+    </div>
+    {% if landing_flights %}
+    <div class="table-wrap">
+      <table class="atc-table" style="min-width:300px;">
+        <thead><tr><th>#</th><th>Flight</th><th>Airline</th><th>Time</th><th>Emrg</th></tr></thead>
+        <tbody>
+          {% for f in landing_flights %}
+          <tr {% if forloop.first %}style="background:rgba(245,158,11,0.05);"{% endif %}>
+            <td class="mono" style="color:var(--text-muted); font-size:11px;">{{ forloop.counter }}</td>
+            <td class="flight-id"><span style="color:var(--amber)">FL</span>{{ f.flight_id }}</td>
+            <td class="airline-name">{{ f.airline }}</td>
+            <td class="mono" style="font-size:11px; color:var(--text-muted);">{{ f.hours|stringformat:"02d" }}:{{ f.minutes|stringformat:"02d" }}</td>
+            <td>
+              {% if f.emergency %}
+                <span class="atc-badge badge-emergency" style="font-size:9px;">EMRG</span>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:30px 0; color:var(--text-muted);">
+      <i class="bi bi-inbox" style="font-size:22px; display:block; margin-bottom:6px;"></i>
+      Queue is empty
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Takeoff Queue -->
+  <div class="atc-card">
+    <div class="atc-card-header">
+      <span class="dot" style="background:var(--cyan)"></span>
+      TAKEOFF QUEUE
+      <span style="margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--cyan);">{{ takeoff_flights|length }}</span>
+    </div>
+    {% if takeoff_flights %}
+    <div class="table-wrap">
+      <table class="atc-table" style="min-width:300px;">
+        <thead><tr><th>#</th><th>Flight</th><th>Airline</th><th>Time</th><th>Emrg</th></tr></thead>
+        <tbody>
+          {% for f in takeoff_flights %}
+          <tr {% if forloop.first %}style="background:rgba(6,182,212,0.05);"{% endif %}>
+            <td class="mono" style="color:var(--text-muted); font-size:11px;">{{ forloop.counter }}</td>
+            <td class="flight-id"><span style="color:var(--cyan)">FL</span>{{ f.flight_id }}</td>
+            <td class="airline-name">{{ f.airline }}</td>
+            <td class="mono" style="font-size:11px; color:var(--text-muted);">{{ f.hours|stringformat:"02d" }}:{{ f.minutes|stringformat:"02d" }}</td>
+            <td>
+              {% if f.emergency %}
+                <span class="atc-badge badge-emergency" style="font-size:9px;">EMRG</span>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:30px 0; color:var(--text-muted);">
+      <i class="bi bi-inbox" style="font-size:22px; display:block; margin-bottom:6px;"></i>
+      Queue is empty
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Standby Queue -->
+  <div class="atc-card">
+    <div class="atc-card-header">
+      <span class="dot" style="background:var(--text-muted)"></span>
+      STANDBY QUEUE
+      <span style="margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--text-muted);">{{ standby_flights|length }}</span>
+    </div>
+    {% if standby_flights %}
+    <div class="table-wrap">
+      <table class="atc-table" style="min-width:300px;">
+        <thead><tr><th>#</th><th>Flight</th><th>Airline</th><th>Time</th><th>Emrg</th></tr></thead>
+        <tbody>
+          {% for f in standby_flights %}
+          <tr>
+            <td class="mono" style="color:var(--text-muted); font-size:11px;">{{ forloop.counter }}</td>
+            <td class="flight-id">FL{{ f.flight_id }}</td>
+            <td class="airline-name">{{ f.airline }}</td>
+            <td class="mono" style="font-size:11px; color:var(--text-muted);">{{ f.hours|stringformat:"02d" }}:{{ f.minutes|stringformat:"02d" }}</td>
+            <td>
+              {% if f.emergency %}
+                <span class="atc-badge badge-emergency" style="font-size:9px;">EMRG</span>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:30px 0; color:var(--text-muted);">
+      <i class="bi bi-inbox" style="font-size:22px; display:block; margin-bottom:6px;"></i>
+      Queue is empty
+    </div>
+    {% endif %}
+
+    {% if standby_flights %}
+    <div style="margin-top:12px;">
+      <a href="{% url 'standby_manage' %}" class="btn-atc btn-cyan" style="width:100%; justify-content:center; text-decoration:none;">
+        <i class="bi bi-pencil-square"></i> MANAGE STANDBY
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<div class="atc-card" style="margin-top:1rem;">
+  <div class="atc-card-header"><span class="dot" style="background:var(--blue)"></span> QUEUE NOTES</div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; font-size:12px; color:var(--text-secondary);">
+    <div><i class="bi bi-info-circle" style="color:var(--blue);"></i> Flights sorted by scheduled time, with emergencies pushed to position #1.</div>
+    <div><i class="bi bi-info-circle" style="color:var(--blue);"></i> Row #1 in each queue will be processed next when you click the action buttons above.</div>
+    <div><i class="bi bi-info-circle" style="color:var(--blue);"></i> Queues rebuild from the database on every page load — always up to date.</div>
+  </div>
+</div>
+
+{% endblock %}

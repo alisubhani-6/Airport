@@ -1,0 +1,243 @@
+{% extends 'port/base.html' %}
+{% block title %}Standby Manager — ATC{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">STANDBY MANAGER
+      <small>Update time or promote standby flights to landing / takeoff</small>
+    </h1>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'dashboard' %}" class="btn-atc btn-ghost"><i class="bi bi-arrow-left"></i> DASHBOARD</a>
+    <a href="{% url 'queues' %}"    class="btn-atc btn-blue"><i class="bi bi-stack"></i> ALL QUEUES</a>
+  </div>
+</div>
+
+<!-- Summary strip -->
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:1.1rem;">
+  <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:10px 18px; display:flex; align-items:center; gap:10px;">
+    <i class="bi bi-clock" style="color:var(--text-muted); font-size:16px;"></i>
+    <div>
+      <div style="font-family:var(--mono); font-size:20px; color:var(--text-secondary);">{{ standby_flights|length }}</div>
+      <div style="font-size:10px; color:var(--text-muted); font-family:var(--mono); text-transform:uppercase; letter-spacing:.06em;">On Standby</div>
+    </div>
+  </div>
+  {% if emergency_count %}
+  <div style="background:var(--red-glow); border:1px solid rgba(239,68,68,0.4); border-radius:8px; padding:10px 18px; display:flex; align-items:center; gap:10px; animation:pulse-border 2s infinite;">
+    <i class="bi bi-exclamation-octagon-fill" style="color:var(--red); font-size:16px;"></i>
+    <div>
+      <div style="font-family:var(--mono); font-size:20px; color:var(--red);">{{ emergency_count }}</div>
+      <div style="font-size:10px; color:var(--red); font-family:var(--mono); text-transform:uppercase; letter-spacing:.06em;">Emergency</div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if standby_flights %}
+
+<!-- Desktop table (hidden on mobile) -->
+<div class="atc-card" style="display:block;">
+  <div class="atc-card-header">
+    <span class="dot" style="background:var(--text-muted)"></span>
+    STANDBY FLIGHTS — INLINE EDITOR
+    <span style="margin-left:auto; font-size:10px; color:var(--text-muted);">Edit and submit per row</span>
+  </div>
+
+  <div class="table-wrap">
+    <table class="atc-table" style="min-width:700px;">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Flight</th>
+          <th>Airline</th>
+          <th>Runway</th>
+          <th>Emrg</th>
+          <th style="min-width:140px;">New Time (min)</th>
+          <th style="min-width:160px;">Promote To</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in standby_flights %}
+        <tr id="row-{{ f.flight_id }}">
+          <td class="mono" style="color:var(--text-muted); font-size:11px;">{{ forloop.counter }}</td>
+          <td class="flight-id">
+            <span style="color:var(--text-muted)">FL</span>{{ f.flight_id }}
+            {% if f.emergency %}<br><span class="atc-badge badge-emergency" style="font-size:9px; margin-top:3px;">EMRG</span>{% endif %}
+          </td>
+          <td class="airline-name">{{ f.airline }}</td>
+          <td class="mono" style="color:var(--cyan); font-size:12px;">RWY {{ f.runway_id }}</td>
+          <td>
+            {% if f.emergency %}
+              <span class="atc-badge badge-emergency" style="font-size:9px;">YES</span>
+            {% else %}
+              <span style="color:var(--text-muted);">—</span>
+            {% endif %}
+          </td>
+
+          <!-- Inline edit form -->
+          <td>
+            <form method="post" action="{% url 'standby_update' f.pk %}" id="form-{{ f.pk }}" style="display:contents;">
+              {% csrf_token %}
+              <div style="display:flex; align-items:center; gap:6px;">
+                <input type="number" name="time" value="{{ f.time }}"
+                  min="0" max="1439"
+                  class="atc-input time-input"
+                  data-preview="prev-{{ f.pk }}"
+                  style="width:90px; font-family:var(--mono); padding:6px 8px; font-size:12px;"
+                  placeholder="0–1439">
+                <span id="prev-{{ f.pk }}" class="mono" style="font-size:12px; color:var(--cyan); min-width:40px;">{{ f.formatted_time }}</span>
+              </div>
+            </form>
+          </td>
+
+          <td>
+            <select name="status" form="form-{{ f.pk }}" class="atc-select" style="padding:6px 8px; font-size:12px;">
+              <option value="StandBy" selected>— Keep Standby —</option>
+              <option value="landing">🛬 Promote to Landing</option>
+              <option value="takeoff">🛫 Promote to Takeoff</option>
+            </select>
+          </td>
+
+          <td>
+            <button type="submit" form="form-{{ f.pk }}" class="btn-atc btn-amber" style="padding:5px 10px; font-size:10px;">
+              <i class="bi bi-check2"></i> SAVE
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Mobile cards (one card per flight) -->
+<div class="standby-mobile-cards" style="display:none; flex-direction:column; gap:10px;">
+  {% for f in standby_flights %}
+  <div class="atc-card" style="{% if f.emergency %}border-color:rgba(239,68,68,0.4);{% endif %}">
+
+    <!-- Header row -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div>
+        <div style="font-family:var(--mono); font-size:16px; color:var(--amber);">FL{{ f.flight_id }}</div>
+        <div style="font-size:13px; font-weight:600; color:var(--text-primary);">{{ f.airline }}</div>
+      </div>
+      <div style="text-align:right;">
+        {% include 'port/_status_badge.html' with status=f.status %}
+        {% if f.emergency %}<br><span class="atc-badge badge-emergency" style="margin-top:4px; font-size:9px;"><i class="bi bi-exclamation-circle"></i> EMRG</span>{% endif %}
+      </div>
+    </div>
+
+    <!-- Info row -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+      <div>
+        <div class="atc-label">Runway</div>
+        <div class="mono text-cyan">RWY {{ f.runway_id }}</div>
+      </div>
+      <div>
+        <div class="atc-label">Current Time</div>
+        <div class="mono" style="font-size:15px;">{{ f.formatted_time }}</div>
+      </div>
+    </div>
+
+    <!-- Edit form -->
+    <form method="post" action="{% url 'standby_update' f.pk %}">
+      {% csrf_token %}
+      <div style="margin-bottom:10px;">
+        <label class="atc-label"><i class="bi bi-clock"></i> New Scheduled Time (minutes)</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="number" name="time" value="{{ f.time }}"
+            min="0" max="1439"
+            class="atc-input time-input"
+            data-preview="mprev-{{ f.pk }}"
+            placeholder="0–1439"
+            style="font-family:var(--mono);">
+          <span id="mprev-{{ f.pk }}" class="mono" style="font-size:14px; color:var(--cyan); flex-shrink:0; min-width:45px;">{{ f.formatted_time }}</span>
+        </div>
+        <div style="font-size:10px; color:var(--text-muted); margin-top:3px;">0=00:00 · 480=08:00 · 720=12:00 · 1439=23:59</div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label class="atc-label"><i class="bi bi-arrow-right-circle"></i> Promote Status</label>
+        <select name="status" class="atc-select">
+          <option value="StandBy" selected>— Keep Standby —</option>
+          <option value="landing">🛬 Promote to Landing</option>
+          <option value="takeoff">🛫 Promote to Takeoff</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn-atc btn-amber" style="width:100%; justify-content:center;">
+        <i class="bi bi-check-circle"></i> SAVE CHANGES
+      </button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+
+<div class="atc-card" style="text-align:center; padding:3rem 1.5rem;">
+  <i class="bi bi-inbox" style="font-size:40px; color:var(--text-muted); display:block; margin-bottom:12px;"></i>
+  <div style="font-family:var(--mono); font-size:14px; color:var(--text-secondary); margin-bottom:6px;">No standby flights</div>
+  <div style="font-size:12px; color:var(--text-muted); margin-bottom:20px;">All standby slots are clear.</div>
+  <a href="{% url 'add_flight' %}" class="btn-atc btn-green"><i class="bi bi-plus"></i> ADD FLIGHT</a>
+</div>
+
+{% endif %}
+
+<!-- Info footer -->
+<div class="atc-card" style="margin-top:1rem;">
+  <div class="atc-card-header"><span class="dot" style="background:var(--blue)"></span> HOW THIS WORKS</div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; font-size:12px; color:var(--text-secondary);">
+    <div><i class="bi bi-clock" style="color:var(--blue);"></i> Change the time (minutes past midnight) and hit <strong style="color:var(--text-primary);">SAVE</strong> to reschedule.</div>
+    <div><i class="bi bi-arrow-up-circle" style="color:var(--blue);"></i> Select <em>Promote to Landing</em> or <em>Promote to Takeoff</em> to move the flight into that queue.</div>
+    <div><i class="bi bi-info-circle" style="color:var(--blue);"></i> Selecting <em>Keep Standby</em> only updates the scheduled time without changing the status.</div>
+  </div>
+</div>
+
+<style>
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(239,68,68,0.4); }
+  50%       { border-color: rgba(239,68,68,0.8); }
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Live time preview for all time inputs
+function minsToHHMM(v) {
+  const n = parseInt(v, 10);
+  if (isNaN(n) || n < 0 || n > 1439) return '--:--';
+  return String(Math.floor(n/60)).padStart(2,'0') + ':' + String(n%60).padStart(2,'0');
+}
+
+document.querySelectorAll('.time-input').forEach(input => {
+  const prevId = input.dataset.preview;
+  const preview = document.getElementById(prevId);
+  if (!preview) return;
+
+  function update() { preview.textContent = minsToHHMM(input.value); }
+  input.addEventListener('input', update);
+  update();
+});
+
+// Responsive: show mobile cards below 640px, hide table
+function applyLayout() {
+  const isMobile = window.innerWidth < 640;
+  const table = document.querySelector('.atc-card:not(.standby-mobile-cards)');
+  const cards = document.querySelector('.standby-mobile-cards');
+  if (!cards) return;
+  cards.style.display = isMobile ? 'flex' : 'none';
+  // Table card shown via CSS block; we hide it on mobile
+  const tableCard = document.querySelector('.table-wrap')?.closest('.atc-card');
+  if (tableCard) tableCard.style.display = isMobile ? 'none' : 'block';
+}
+
+applyLayout();
+window.addEventListener('resize', applyLayout);
+</script>
+{% endblock %}

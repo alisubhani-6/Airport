@@ -1,0 +1,87 @@
+{% extends 'port/base.html' %}
+{% block title %}Search — ATC{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">FLIGHT SEARCH
+    <small>Look up any flight by ID using the BST index</small>
+  </h1>
+</div>
+
+<div style="max-width:500px; margin-bottom:1.5rem;">
+  <div class="atc-card">
+    <div class="atc-card-header"><span class="dot"></span> SEARCH BY FLIGHT ID</div>
+    <form method="get" style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+      <div style="flex:1; min-width:180px;">
+        <label class="atc-label"><i class="bi bi-search"></i> Flight ID</label>
+        <input type="number" name="flight_id"
+          value="{{ form.flight_id.value|default:'' }}"
+          class="atc-input" placeholder="Enter Flight ID…">
+        {% for e in form.flight_id.errors %}
+        <div style="color:var(--red); font-size:11px; margin-top:4px;">{{ e }}</div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn-atc btn-amber" style="align-self:flex-end;">
+        <i class="bi bi-search"></i> SEARCH
+      </button>
+    </form>
+    <div style="margin-top:10px; font-size:11px; color:var(--text-muted);">
+      <i class="bi bi-cpu"></i> Search is O(log n) via Binary Search Tree indexing.
+    </div>
+  </div>
+</div>
+
+{% if found == False %}
+<div class="atc-alert danger">
+  <i class="bi bi-x-octagon-fill"></i>
+  No flight found with ID <strong>{{ request.GET.flight_id }}</strong> in the BST index.
+</div>
+{% endif %}
+
+{% if result %}
+<div class="search-result">
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+    <div style="font-size:32px;">✈️</div>
+    <div>
+      <div style="font-family:var(--mono); font-size:22px; color:var(--amber);">FL{{ result.flight_id }}</div>
+      <div style="font-size:14px; font-weight:600; color:var(--text-primary);">{{ result.airline }}</div>
+    </div>
+    <div style="margin-left:auto; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+      {% include 'port/_status_badge.html' with status=result.status %}
+      {% if result.emergency %}
+      <span class="atc-badge badge-emergency"><i class="bi bi-exclamation-circle"></i> EMERGENCY</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px,1fr)); gap:12px; margin-bottom:16px;">
+    <div>
+      <div class="atc-label">Runway</div>
+      <div class="mono text-cyan">RWY {{ result.runway_id }}</div>
+    </div>
+    <div>
+      <div class="atc-label">Sched. Time</div>
+      <div class="mono" style="font-size:16px;">{{ result.formatted_time }}</div>
+    </div>
+    <div>
+      <div class="atc-label">Added</div>
+      <div style="font-size:12px; color:var(--text-secondary);">{{ result.created_at|date:"d M, H:i" }}</div>
+    </div>
+    <div>
+      <div class="atc-label">Processed</div>
+      <div style="font-size:12px; color:var(--text-secondary);">
+        {% if result.processed_at %}{{ result.processed_at|date:"d M, H:i" }}{% else %}Pending{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="{% url 'flight_detail' result.pk %}" class="btn-atc btn-amber"><i class="bi bi-eye"></i> FULL DETAILS</a>
+    {% if result.is_pending %}
+    <a href="{% url 'cancel_flight' result.pk %}" class="btn-atc btn-red"><i class="bi bi-x-circle"></i> CANCEL</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

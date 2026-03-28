@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}ATC — Air Traffic Control{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-deep:    #080d1a;
+      --bg-panel:   #0d1628;
+      --bg-card:    #111e35;
+      --bg-hover:   #162340;
+      --border:     #1e3058;
+      --border-lt:  #2a4070;
+      --amber:      #f59e0b;
+      --amber-glow: rgba(245,158,11,0.15);
+      --green:      #10b981;
+      --green-glow: rgba(16,185,129,0.15);
+      --red:        #ef4444;
+      --red-glow:   rgba(239,68,68,0.15);
+      --blue:       #3b82f6;
+      --blue-glow:  rgba(59,130,246,0.15);
+      --cyan:       #06b6d4;
+      --text-primary:   #e2e8f0;
+      --text-secondary: #7d96be;
+      --text-muted:     #4a6080;
+      --mono: 'Space Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      background-color: var(--bg-deep);
+      color: var(--text-primary);
+      font-family: var(--sans);
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: var(--border-lt); border-radius: 3px; }
+
+    /* ── Navbar ── */
+    .atc-nav {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .atc-nav .brand {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--amber) !important;
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .brand-icon {
+      width: 28px; height: 28px;
+      background: var(--amber-glow);
+      border: 1px solid var(--amber);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2px;
+      margin-left: 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 6px;
+      transition: all 0.15s;
+      display: flex; align-items: center; gap: 5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav-links a:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-links a.active { background: var(--amber-glow); color: var(--amber); }
+    .nav-spacer { flex: 1; }
+    .nav-clock {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--bg-card);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav-clock span { color: var(--amber); }
+
+    /* Mobile hamburger */
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      padding: 4px 8px;
+      font-size: 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .mobile-nav {
+      display: none;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 8px;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .mobile-nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 14px;
+      border-radius: 6px;
+      display: flex; align-items: center; gap: 8px;
+      transition: all 0.15s;
+    }
+    .mobile-nav a:hover, .mobile-nav a.active {
+      background: var(--amber-glow); color: var(--amber);
+    }
+    .mobile-nav.open { display: flex; }
+
+    /* ── Layout ── */
+    .atc-main {
+      padding: 1rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ── Page header ── */
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .page-title {
+      font-family: var(--mono);
+      font-size: 16px;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .page-title small {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 2px;
+    }
+    .page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Cards ── */
+    .atc-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem;
+    }
+    .atc-card-header {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .atc-card-header .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--amber); flex-shrink: 0;
+    }
+
+    /* ── Stat cards ── */
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .stat-card:hover { border-color: var(--border-lt); transform: translateY(-1px); }
+    .stat-card .stat-label {
+      font-size: 10px; font-family: var(--mono);
+      color: var(--text-muted); letter-spacing: 0.08em;
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .stat-card .stat-value {
+      font-family: var(--mono); font-size: 26px;
+      font-weight: 700; line-height: 1;
+    }
+    .stat-card .stat-icon {
+      position: absolute; right: 10px; top: 10px;
+      font-size: 18px; opacity: 0.2;
+    }
+    .stat-card.amber  { border-left: 3px solid var(--amber); }
+    .stat-card.amber  .stat-value { color: var(--amber); }
+    .stat-card.green  { border-left: 3px solid var(--green); }
+    .stat-card.green  .stat-value { color: var(--green); }
+    .stat-card.blue   { border-left: 3px solid var(--blue); }
+    .stat-card.blue   .stat-value { color: var(--blue); }
+    .stat-card.red    { border-left: 3px solid var(--red); }
+    .stat-card.red    .stat-value { color: var(--red); }
+    .stat-card.cyan   { border-left: 3px solid var(--cyan); }
+    .stat-card.cyan   .stat-value { color: var(--cyan); }
+    .stat-card.muted  { border-left: 3px solid var(--text-muted); }
+    .stat-card.muted  .stat-value { color: var(--text-muted); }
+
+    /* Stats grid — 6 cols desktop, 3 tablet, 2 mobile */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Badges ── */
+    .atc-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .badge-landing  { background: rgba(245,158,11,0.15); color: var(--amber);  border: 1px solid rgba(245,158,11,0.3); }
+    .badge-takeoff  { background: rgba(6,182,212,0.15);  color: var(--cyan);   border: 1px solid rgba(6,182,212,0.3); }
+    .badge-standby  { background: rgba(125,150,190,0.1); color: var(--text-secondary); border: 1px solid var(--border); }
+    .badge-landed   { background: rgba(16,185,129,0.15); color: var(--green);  border: 1px solid rgba(16,185,129,0.3); }
+    .badge-departed { background: rgba(59,130,246,0.15); color: var(--blue);   border: 1px solid rgba(59,130,246,0.3); }
+    .badge-cancelled{ background: rgba(239,68,68,0.15);  color: var(--red);    border: 1px solid rgba(239,68,68,0.3); }
+    .badge-emergency{ background: rgba(239,68,68,0.2);   color: var(--red);    border: 1px solid var(--red); animation: pulse-red 1.5s infinite; }
+
+    @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+    /* ── Tables ── */
+    .atc-table { width: 100%; border-collapse: collapse; }
+    .atc-table th {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-muted); padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left; font-weight: 400;
+      white-space: nowrap;
+    }
+    .atc-table td {
+      padding: 10px; border-bottom: 1px solid rgba(30,48,88,0.5);
+      vertical-align: middle; color: var(--text-secondary); font-size: 13px;
+    }
+    .atc-table tr:hover td { background: var(--bg-hover); }
+    .atc-table .flight-id { font-family: var(--mono); color: var(--text-primary); font-size: 13px; }
+    .atc-table .airline-name { color: var(--text-primary); font-weight: 500; }
+
+    /* Responsive table wrapper */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* ── Buttons ── */
+    .btn-atc {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      padding: 6px 13px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex; align-items: center; gap: 5px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-atc:hover { transform: translateY(-1px); }
+    .btn-amber { background: var(--amber-glow); color: var(--amber); border-color: rgba(245,158,11,0.3); }
+    .btn-amber:hover { background: rgba(245,158,11,0.25); color: var(--amber); }
+    .btn-green { background: var(--green-glow); color: var(--green); border-color: rgba(16,185,129,0.3); }
+    .btn-green:hover { background: rgba(16,185,129,0.25); color: var(--green); }
+    .btn-red   { background: var(--red-glow);   color: var(--red);   border-color: rgba(239,68,68,0.3); }
+    .btn-red:hover   { background: rgba(239,68,68,0.25); color: var(--red); }
+    .btn-blue  { background: var(--blue-glow);  color: var(--blue);  border-color: rgba(59,130,246,0.3); }
+    .btn-blue:hover  { background: rgba(59,130,246,0.25); color: var(--blue); }
+    .btn-ghost { background: transparent; color: var(--text-secondary); border-color: var(--border); }
+    .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .btn-cyan  { background: rgba(6,182,212,0.12); color: var(--cyan); border-color: rgba(6,182,212,0.3); }
+    .btn-cyan:hover { background: rgba(6,182,212,0.22); color: var(--cyan); }
+
+    /* ── Forms ── */
+    .atc-input, .atc-select {
+      background: var(--bg-panel); border: 1px solid var(--border);
+      color: var(--text-primary); border-radius: 7px;
+      padding: 8px 11px; font-size: 13px;
+      font-family: var(--sans); width: 100%;
+      transition: border-color 0.15s;
+    }
+    .atc-input:focus, .atc-select:focus {
+      outline: none; border-color: var(--amber);
+      background: var(--bg-card);
+      box-shadow: 0 0 0 3px var(--amber-glow);
+    }
+    .atc-select option { background: var(--bg-panel); }
+    .atc-label {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 5px; display: block;
+    }
+    .form-check-input-atc { width: 16px; height: 16px; accent-color: var(--amber); }
+
+    /* ── Alert / Messages ── */
+    .atc-alert {
+      border-radius: 8px; padding: 10px 14px;
+      margin-bottom: 10px; font-size: 13px;
+      display: flex; align-items: center; gap: 8px; border: 1px solid;
+    }
+    .atc-alert.success { background: var(--green-glow); color: var(--green); border-color: rgba(16,185,129,0.3); }
+    .atc-alert.error,
+    .atc-alert.danger   { background: var(--red-glow); color: var(--red); border-color: rgba(239,68,68,0.3); }
+    .atc-alert.warning  { background: var(--amber-glow); color: var(--amber); border-color: rgba(245,158,11,0.3); }
+    .atc-alert.info     { background: var(--blue-glow); color: var(--blue); border-color: rgba(59,130,246,0.3); }
+
+    /* ── Emergency banner ── */
+    .emergency-banner {
+      background: linear-gradient(90deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));
+      border: 1px solid rgba(239,68,68,0.4); border-radius: 8px;
+      padding: 10px 14px; display: flex; align-items: center; gap: 10px;
+      margin-bottom: 1rem; animation: pulse-border 2s infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { border-color: rgba(239,68,68,0.4); }
+      50%       { border-color: rgba(239,68,68,0.8); }
+    }
+    .emergency-banner .em-icon { font-size: 18px; color: var(--red); }
+    .emergency-banner .em-text { font-size: 13px; color: var(--red); font-weight: 500; }
+
+    /* ── Queue bar ── */
+    .queue-bar-wrap { background: var(--bg-panel); border-radius: 4px; height: 6px; overflow: hidden; margin-top: 6px; }
+    .queue-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+
+    /* ── Next flight panel ── */
+    .next-flight-panel {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; background: var(--bg-panel);
+      border: 1px solid var(--border); border-radius: 8px;
+    }
+    .next-flight-icon { font-size: 22px; }
+    .next-flight-info .nf-id { font-family: var(--mono); font-size: 15px; color: var(--text-primary); }
+    .next-flight-info .nf-airline { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Log items ── */
+    .log-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid rgba(30,48,88,0.4); font-size: 12px;
+    }
+    .log-item:last-child { border-bottom: none; }
+    .log-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border-lt); margin-top: 4px; flex-shrink: 0; }
+    .log-time { font-family: var(--mono); color: var(--text-muted); font-size: 11px; flex-shrink: 0; }
+    .log-msg  { color: var(--text-secondary); }
+
+    /* ── Timeline ── */
+    .timeline { position: relative; padding-left: 24px; }
+    .timeline::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 0; width: 1px; background: var(--border); }
+    .timeline-item { position: relative; margin-bottom: 16px; }
+    .timeline-item::before { content: ''; position: absolute; left: -20px; top: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--amber); border: 2px solid var(--bg-deep); }
+    .timeline-item .tl-time  { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+    .timeline-item .tl-label { font-size: 13px; color: var(--text-primary); }
+    .timeline-item .tl-msg   { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ── Search result card ── */
+    .search-result {
+      background: var(--bg-card); border: 1px solid var(--amber);
+      border-radius: 10px; padding: 1.25rem;
+      box-shadow: 0 0 20px var(--amber-glow);
+    }
+
+    /* ── Misc utils ── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1.1rem 0; }
+    .mono { font-family: var(--mono); }
+    .text-amber  { color: var(--amber); }
+    .text-green  { color: var(--green); }
+    .text-red    { color: var(--red); }
+    .text-blue   { color: var(--blue); }
+    .text-cyan   { color: var(--cyan); }
+    .text-muted-atc { color: var(--text-muted); }
+
+    /* ── Responsive Grids ── */
+    .grid-3-queues {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .grid-2-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* ── RESPONSIVE BREAKPOINTS ── */
+    @media (max-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+      .grid-3-queues { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-toggle { display: block; }
+      .nav-clock { display: none; }
+
+      .atc-main { padding: 0.75rem; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+      .stat-card .stat-value { font-size: 22px; }
+      .stat-card { padding: 0.8rem; }
+
+      .grid-3-queues { grid-template-columns: 1fr; }
+      .grid-2-bottom { grid-template-columns: 1fr; }
+
+      .page-header { align-items: flex-start; }
+      .page-title { font-size: 14px; }
+
+      .search-result > div:nth-child(2) { grid-template-columns: 1fr 1fr !important; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-card .stat-icon { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="atc-nav">
+  <a href="{% url 'dashboard' %}" class="brand">
+    <span class="brand-icon">✈</span>
+    ATC::CTRL
+  </a>
+
+  <!-- Desktop nav -->
+  <div class="nav-links">
+    <a href="{% url 'dashboard' %}"      {% if request.resolver_match.url_name == 'dashboard'      %}class="active"{% endif %}><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="{% url 'flight_list' %}"    {% if request.resolver_match.url_name == 'flight_list'    %}class="active"{% endif %}><i class="bi bi-list-ul"></i> Flights</a>
+    <a href="{% url 'add_flight' %}"     {% if request.resolver_match.url_name == 'add_flight'     %}class="active"{% endif %}><i class="bi bi-plus-circle"></i> Add</a>
+    <a href="{% url 'queues' %}"         {% if request.resolver_match.url_name == 'queues'         %}class="active"{% endif %}><i class="bi bi-stack"></i> Queues</a>
+    <a href="{% url 'standby_manage' %}" {% if request.resolver_match.url_name == 'standby_manage' %}class="active"{% endif %}><i class="bi bi-clock"></i> Standby</a>
+    <a href="{% url 'search_flight' %}{% if request.resolver_match.url_name == 'search_flight' %}class="active"{% endif %}"><i class="bi bi-search"></i> Search</a>
+  </div>
+
+  <div class="nav-spacer"></div>
+
+  <div class="nav-clock">UTC <span id="live-clock">--:--:--</span></div>
+
+  <!-- Mobile toggle -->
+  <button class="nav-toggle" onclick="toggleMobileNav()" aria-label="Menu">
+    <i class="bi bi-list" id="nav-icon"></i>
+  </button>
+</nav>
+
+<!-- Mobile nav drawer -->
+<div class="mobile-nav" id="mobile-nav">
+  <a href="{% url 'dashboard' %}"      {% if request.resolver_match.url_name == 'dashboard'      %}class="active"{% endif %}><i class="bi bi-speedometer2"></i> Dashboard</a>
+  <a href="{% url 'flight_list' %}"    {% if request.resolver_match.url_name == 'flight_list'    %}class="active"{% endif %}><i class="bi bi-list-ul"></i> Flights</a>
+  <a href="{% url 'add_flight' %}"     {% if request.resolver_match.url_name == 'add_flight'     %}class="active"{% endif %}><i class="bi bi-plus-circle"></i> Add Flight</a>
+  <a href="{% url 'queues' %}"         {% if request.resolver_match.url_name == 'queues'         %}class="active"{% endif %}><i class="bi bi-stack"></i> Queues</a>
+  <a href="{% url 'standby_manage' %}" {% if request.resolver_match.url_name == 'standby_manage' %}class="active"{% endif %}><i class="bi bi-clock"></i> Standby Manager</a>
+  <a href="{% url 'search_flight' %}"  {% if request.resolver_match.url_name == 'search_flight'  %}class="active"{% endif %}><i class="bi bi-search"></i> Search</a>
+</div>
+
+<main class="atc-main">
+  {% for message in messages %}
+    <div class="atc-alert {% if message.tags == 'success' %}success{% elif message.tags == 'error' or message.tags == 'danger' %}danger{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}">
+      <i class="bi {% if message.tags == 'success' %}bi-check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}bi-exclamation-circle{% elif message.tags == 'warning' %}bi-exclamation-triangle{% else %}bi-info-circle{% endif %}"></i>
+      {{ message }}
+    </div>
+  {% endfor %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function tick() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('live-clock').textContent =
+      `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}`;
+  }
+  tick(); setInterval(tick, 1000);
+
+  function toggleMobileNav() {
+    const nav = document.getElementById('mobile-nav');
+    const icon = document.getElementById('nav-icon');
+    nav.classList.toggle('open');
+    icon.className = nav.classList.contains('open') ? 'bi bi-x-lg' : 'bi bi-list';
+  }
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

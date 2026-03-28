@@ -1,0 +1,279 @@
+{% extends 'port/base.html' %}
+{% block title %}{{ title }} — ATC{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">{{ title|upper }}
+    <small>Register or update a flight in the control system</small>
+  </h1>
+  <a href="{% url 'flight_list' %}" class="btn-atc btn-ghost"><i class="bi bi-arrow-left"></i> BACK</a>
+</div>
+
+<div style="max-width:680px;">
+  <div class="atc-card">
+    <div class="atc-card-header"><span class="dot"></span> FLIGHT REGISTRATION FORM</div>
+
+    {% if form.non_field_errors %}
+      {% for e in form.non_field_errors %}
+        <div class="atc-alert danger" style="margin-bottom:12px;">
+          <i class="bi bi-exclamation-circle"></i> {{ e }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" id="flight-form">
+      {% csrf_token %}
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+
+        <!-- Flight ID -->
+        <div>
+          <label class="atc-label">Flight ID *</label>
+          <input type="number" name="flight_id" id="id_flight_id"
+            value="{{ form.flight_id.value|default_if_none:'' }}"
+            class="atc-input {% if form.flight_id.errors %}border-error{% endif %}"
+            placeholder="e.g. 101" min="1">
+          <div id="flight-id-hint" style="font-size:11px; color:var(--text-muted); margin-top:4px; min-height:16px;"></div>
+          {% for e in form.flight_id.errors %}
+            <div class="field-error"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>
+          {% endfor %}
+        </div>
+
+        <!-- Airline -->
+        <div>
+          <label class="atc-label">Airline *</label>
+          <input type="text" name="airline" id="id_airline"
+            value="{{ form.airline.value|default_if_none:'' }}"
+            class="atc-input {% if form.airline.errors %}border-error{% endif %}"
+            placeholder="e.g. Emirates">
+          {% for e in form.airline.errors %}
+            <div class="field-error"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>
+          {% endfor %}
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label class="atc-label">Status *</label>
+          <select name="status" id="id_status" class="atc-select {% if form.status.errors %}border-error{% endif %}">
+            <option value="landing" {% if form.status.value == 'landing' %}selected{% endif %}>Landing</option>
+            <option value="takeoff" {% if form.status.value == 'takeoff' %}selected{% endif %}>Takeoff</option>
+            <option value="StandBy" {% if form.status.value == 'StandBy' %}selected{% endif %}>Stand By</option>
+          </select>
+          {% for e in form.status.errors %}
+            <div class="field-error"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>
+          {% endfor %}
+        </div>
+
+        <!-- Runway -->
+        <div>
+          <label class="atc-label">Runway (1–5) *</label>
+          <select name="runway_id" id="id_runway_id" class="atc-select {% if form.runway_id.errors %}border-error{% endif %}">
+            {% for val, label in form.runway_choices %}
+              <option value="{{ val }}" {% if form.runway_id.value|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          {% for e in form.runway_id.errors %}
+            <div class="field-error"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>
+          {% endfor %}
+        </div>
+
+        <!-- Date -->
+        <div style="grid-column:span 2;">
+          <label class="atc-label">Date — Day of Year ({{ form.current_year }}) *</label>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div style="background:var(--bg-panel); border:1px solid var(--border); border-radius:7px; padding:8px 14px; font-family:var(--mono); font-size:13px; color:var(--amber); flex-shrink:0;">
+              {{ form.current_year }}
+            </div>
+            <div style="flex:1; min-width:110px;">
+              <input type="number" name="date_day" id="id_date_day"
+                value="{{ form.date_day.value|default_if_none:form.today_day }}"
+                min="{{ form.today_day }}" max="365"
+                class="atc-input {% if form.date_day.errors %}border-error{% endif %}"
+                placeholder="Day ({{ form.today_day }}–365)"
+                style="font-family:var(--mono);">
+            </div>
+            <div id="date-preview" style="font-size:13px; color:var(--text-secondary); background:var(--bg-panel); border:1px solid var(--border); border-radius:7px; padding:8px 12px; flex-shrink:0; min-width:130px; font-family:var(--mono);"></div>
+          </div>
+          <div id="day-inline-error" style="color:var(--red); font-size:11px; margin-top:4px; min-height:16px; font-weight:600;"></div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:3px;">
+            <i class="bi bi-calendar3"></i>
+            Today is day <strong style="color:var(--amber);">{{ form.today_day }}</strong> of {{ form.current_year }}. Schedule from today onward (day {{ form.today_day }}–365).
+          </div>
+          {% for e in form.date_day.errors %}
+            <div class="field-error"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>
+          {% endfor %}
+        </div>
+
+        <!-- Time -->
+        <div style="grid-column:span 2;">
+          <label class="atc-label">Scheduled Time (minutes past midnight, 0–1439) *</label>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:150px;">
+              <input type="number" name="time" id="id_time"
+                value="{{ form.time.value|default_if_none:'' }}"
+                min="0" max="1439"
+                class="atc-input {% if form.time.errors %}border-error{% endif %}"
+                placeholder="e.g. 480 = 08:00"
+                style="font-family:var(--mono);">
+            </div>
+            <div id="time-preview" style="font-size:16px; color:var(--cyan); background:var(--bg-panel); border:1px solid var(--border); border-radius:7px; padding:8px 14px; flex-shrink:0; font-family:var(--mono); min-width:80px; text-align:center;">--:--</div>
+          </div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:5px;">
+            <i class="bi bi-clock"></i>
+            0 = 00:00 · 480 = 08:00 · 720 = 12:00 · 1200 = 20:00 · 1439 = 23:59
+            <span id="time-restriction-hint" style="color:var(--amber);"></span>
+          </div>
+          {% for e in form.time.errors %}
+            <div class="field-error"><i class="bi bi-exclamation-circle"></i> {{ e }}</div>
+          {% endfor %}
+        </div>
+
+        <!-- Emergency -->
+        <div style="grid-column:span 2;">
+          <div style="display:flex; align-items:center; gap:10px; background:var(--bg-panel); border:1px solid var(--border); border-radius:7px; padding:12px;">
+            <input type="checkbox" name="emergency" id="id_emergency"
+              class="form-check-input-atc"
+              {% if form.emergency.value %}checked{% endif %}>
+            <div>
+              <label for="id_emergency" style="font-weight:500; cursor:pointer; color:var(--text-primary);">
+                <i class="bi bi-exclamation-octagon" style="color:var(--red);"></i>
+                Mark as Emergency
+              </label>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                Emergency flights are automatically placed at the front of their queue.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <hr class="divider">
+
+      <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+        <a href="{% url 'flight_list' %}" class="btn-atc btn-ghost">CANCEL</a>
+        <button type="submit" class="btn-atc btn-green">
+          <i class="bi bi-check-circle"></i> REGISTER / UPDATE FLIGHT
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .border-error { border-color: var(--red) !important; }
+  .field-error  { color:var(--red); font-size:11px; margin-top:4px; }
+
+  @media (max-width: 540px) {
+    div[style*="grid-template-columns:1fr 1fr"] {
+      grid-template-columns: 1fr !important;
+    }
+    div[style*="grid-column:span 2"] {
+      grid-column: span 1 !important;
+    }
+  }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const TODAY_DAY     = {{ form.today_day }};
+const TODAY_MINUTES = {{ form.today_minutes }};
+const CURRENT_YEAR  = {{ form.current_year }};
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const pad = n => String(n).padStart(2, '0');
+
+function minsToHHMM(v) {
+  const n = parseInt(v, 10);
+  if (isNaN(n)) return '--:--';
+  return `${pad(Math.floor(n / 60))}:${pad(n % 60)}`;
+}
+function formatDate(doy) {
+  const n = parseInt(doy, 10);
+  if (!n || n < 1 || n > 365) return '—';
+  const d = new Date(CURRENT_YEAR, 0, n);
+  return `${MONTHS[d.getMonth()]} ${pad(d.getDate())}, ${CURRENT_YEAR}`;
+}
+
+const dayInput    = document.getElementById('id_date_day');
+const datePreview = document.getElementById('date-preview');
+const timeInput   = document.getElementById('id_time');
+const timePreview = document.getElementById('time-preview');
+const timeHint    = document.getElementById('time-restriction-hint');
+const dayError    = document.getElementById('day-inline-error');
+
+function clampDay() {
+  let v = parseInt(dayInput.value, 10);
+  if (isNaN(v)) return;
+  if (v < TODAY_DAY) {
+    dayInput.value = TODAY_DAY; v = TODAY_DAY;
+    dayInput.style.borderColor = 'var(--red)';
+    dayError.textContent = `⛔ Cannot be before today (day ${TODAY_DAY}).`;
+    setTimeout(() => { dayInput.style.borderColor = ''; dayError.textContent = ''; }, 2000);
+  }
+  if (v > 365) { dayInput.value = 365; v = 365; }
+  datePreview.textContent = formatDate(v);
+  updateTimeMin(v);
+}
+
+function updateTimeMin(day) {
+  const d = day !== undefined ? day : parseInt(dayInput.value, 10);
+  if (d === TODAY_DAY) {
+    timeInput.min = TODAY_MINUTES;
+    timeHint.textContent = ` — Today: must be ≥ ${minsToHHMM(TODAY_MINUTES)}`;
+    if (timeInput.value !== '' && parseInt(timeInput.value, 10) < TODAY_MINUTES) {
+      timeInput.value = TODAY_MINUTES; updateTimePreview();
+    }
+  } else { timeInput.min = 0; timeHint.textContent = ''; }
+}
+
+function updateTimePreview() { timePreview.textContent = minsToHHMM(timeInput.value); }
+
+dayInput.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { const c = parseInt(dayInput.value,10); if (isNaN(c)||c<=TODAY_DAY) e.preventDefault(); }
+});
+dayInput.addEventListener('wheel', e => {
+  if (e.deltaY > 0) { const c = parseInt(dayInput.value,10); if (isNaN(c)||c<=TODAY_DAY) e.preventDefault(); }
+}, { passive: false });
+dayInput.addEventListener('input',  clampDay);
+dayInput.addEventListener('change', clampDay);
+dayInput.addEventListener('blur',   clampDay);
+timeInput.addEventListener('input', updateTimePreview);
+
+const flightIdInput = document.getElementById('id_flight_id');
+const flightIdHint  = document.getElementById('flight-id-hint');
+let lookupTimeout   = null;
+flightIdInput.addEventListener('input', () => {
+  clearTimeout(lookupTimeout);
+  const val = flightIdInput.value.trim();
+  if (!val || isNaN(val) || parseInt(val) <= 0) { flightIdHint.innerHTML = ''; return; }
+  lookupTimeout = setTimeout(() => {
+    fetch(`/search/?flight_id=${encodeURIComponent(val)}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(r => r.text()).then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const found = doc.querySelector('.search-result');
+        flightIdHint.innerHTML = found
+          ? `<span style="color:var(--amber);"><i class="bi bi-arrow-repeat"></i> Flight ${val} exists — submitting will <strong>update</strong> it.</span>`
+          : `<span style="color:var(--green);"><i class="bi bi-plus-circle"></i> New flight ID — will be <strong>created</strong>.</span>`;
+      }).catch(() => { flightIdHint.innerHTML = ''; });
+  }, 400);
+});
+
+document.getElementById('flight-form').addEventListener('submit', function(e) {
+  const day = parseInt(dayInput.value, 10);
+  const time = parseInt(timeInput.value, 10);
+  if (isNaN(day) || day < TODAY_DAY) {
+    e.preventDefault(); dayInput.value = TODAY_DAY; dayInput.focus();
+    dayError.textContent = `⛔ Day cannot be before today (day ${TODAY_DAY}).`; return false;
+  }
+  if (day === TODAY_DAY && !isNaN(time) && time < TODAY_MINUTES) {
+    e.preventDefault(); timeInput.value = TODAY_MINUTES; timeInput.focus(); updateTimePreview(); return false;
+  }
+});
+
+clampDay(); updateTimePreview();
+</script>
+{% endblock %}

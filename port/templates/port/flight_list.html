@@ -1,0 +1,105 @@
+{% extends 'port/base.html' %}
+{% block title %}Flights — ATC{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">FLIGHT REGISTRY
+      <small>All flights — filter, search and manage</small>
+    </h1>
+  </div>
+  <a href="{% url 'add_flight' %}" class="btn-atc btn-green"><i class="bi bi-plus"></i> ADD FLIGHT</a>
+</div>
+
+<!-- Filters -->
+<div class="atc-card" style="margin-bottom:1rem;">
+  <form method="get" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+    <div style="flex:1; min-width:160px;">
+      <label class="atc-label"><i class="bi bi-building"></i> Airline</label>
+      <input type="text" name="airline" value="{{ airline_filter }}" class="atc-input" placeholder="Search airline…">
+    </div>
+    <div style="flex:1; min-width:150px;">
+      <label class="atc-label"><i class="bi bi-funnel"></i> Status</label>
+      <select name="status" class="atc-select">
+        <option value="">All Statuses</option>
+        {% for s, label in status_choices %}
+        <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="display:flex; gap:6px; align-self:flex-end;">
+      <button type="submit" class="btn-atc btn-amber"><i class="bi bi-funnel-fill"></i> FILTER</button>
+      <a href="{% url 'flight_list' %}" class="btn-atc btn-ghost">CLEAR</a>
+    </div>
+  </form>
+</div>
+
+<!-- Table -->
+<div class="atc-card">
+  <div class="atc-card-header">
+    <span class="dot"></span>
+    FLIGHT RECORDS
+    <span style="margin-left:auto; font-size:11px; color:var(--text-muted);">{{ flights|length }} result{{ flights|length|pluralize }}</span>
+  </div>
+  <div class="table-wrap">
+    <table class="atc-table" style="min-width:580px;">
+      <thead>
+        <tr>
+          <th>Flight ID</th>
+          <th>Airline</th>
+          <th>Status</th>
+          <th>Time</th>
+          <th>Runway</th>
+          <th>Emergency</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in flights %}
+        <tr>
+          <td class="flight-id"><span style="color:var(--amber);">FL</span>{{ f.flight_id }}</td>
+          <td class="airline-name">{{ f.airline }}</td>
+          <td>{% include 'port/_status_badge.html' with status=f.status %}</td>
+          <td class="mono" style="font-size:12px;">{{ f.formatted_time }}</td>
+          <td class="mono" style="color:var(--text-muted); font-size:12px;">RWY {{ f.runway_id }}</td>
+          <td>
+            {% if f.emergency %}
+            <span class="atc-badge badge-emergency"><i class="bi bi-exclamation-circle"></i> YES</span>
+            {% else %}
+            <span style="color:var(--text-muted); font-size:11px;">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex; gap:4px; flex-wrap:wrap;">
+              <a href="{% url 'flight_detail' f.pk %}" class="btn-atc btn-ghost" style="padding:4px 8px; font-size:10px;"><i class="bi bi-eye"></i> VIEW</a>
+              {% if f.is_pending %}
+              <a href="{% url 'cancel_flight' f.pk %}" class="btn-atc btn-red" style="padding:4px 8px; font-size:10px;"><i class="bi bi-x"></i> CANCEL</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center; padding:40px; color:var(--text-muted);">
+            <i class="bi bi-inbox" style="font-size:24px; display:block; margin-bottom:8px;"></i>
+            No flights match your filters
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if inorder_ids %}
+<div class="atc-card" style="margin-top:1rem;">
+  <div class="atc-card-header"><span class="dot" style="background:var(--blue)"></span> BST IN-ORDER TRAVERSAL (Pending Flights)</div>
+  <div style="display:flex; flex-wrap:wrap; gap:6px; padding-top:4px;">
+    {% for fid in inorder_ids %}
+    <span style="font-family:var(--mono); font-size:11px; background:var(--bg-panel); border:1px solid var(--border); border-radius:4px; padding:3px 8px; color:var(--blue);">FL{{ fid }}</span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

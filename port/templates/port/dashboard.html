@@ -1,0 +1,192 @@
+{% extends 'port/base.html' %}
+{% block title %}Dashboard — ATC{% endblock %}
+{% block content %}
+
+{% if stats.emergency %}
+<div class="emergency-banner">
+  <span class="em-icon"><i class="bi bi-exclamation-octagon-fill"></i></span>
+  <div>
+    <span class="em-text">⚠ EMERGENCY ALERT — {{ stats.emergency }} emergency flight{{ stats.emergency|pluralize }} in queue</span>
+    <div style="font-size:11px; color: var(--text-muted); margin-top:2px;">Emergency flights are automatically prioritised at the front of each queue.</div>
+  </div>
+</div>
+{% endif %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">SYSTEM OVERVIEW
+      <small>Real-time air traffic control dashboard</small>
+    </h1>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'add_flight' %}" class="btn-atc btn-green"><i class="bi bi-plus"></i> NEW FLIGHT</a>
+    <a href="{% url 'queues' %}"     class="btn-atc btn-blue"><i class="bi bi-stack"></i> QUEUES</a>
+  </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="stats-grid">
+  <div class="stat-card amber">
+    <div class="stat-label">Total</div>
+    <div class="stat-value">{{ stats.total }}</div>
+    <i class="bi bi-airplane stat-icon"></i>
+  </div>
+  <div class="stat-card cyan">
+    <div class="stat-label">Pending</div>
+    <div class="stat-value">{{ stats.pending }}</div>
+    <i class="bi bi-hourglass-split stat-icon"></i>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">Landed</div>
+    <div class="stat-value">{{ stats.landed }}</div>
+    <i class="bi bi-airplane-fill stat-icon"></i>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-label">Departed</div>
+    <div class="stat-value">{{ stats.departed }}</div>
+    <i class="bi bi-send-fill stat-icon"></i>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-label">Emergency</div>
+    <div class="stat-value">{{ stats.emergency }}</div>
+    <i class="bi bi-exclamation-octagon stat-icon"></i>
+  </div>
+  <div class="stat-card muted">
+    <div class="stat-label">Cancelled</div>
+    <div class="stat-value">{{ stats.cancelled }}</div>
+    <i class="bi bi-x-circle stat-icon"></i>
+  </div>
+</div>
+
+<!-- Queue Cards -->
+<div class="grid-3-queues">
+
+  <!-- Landing Queue -->
+  <div class="atc-card">
+    <div class="atc-card-header"><span class="dot" style="background:var(--amber)"></span> LANDING QUEUE</div>
+    {% if next_landing %}
+    <div class="next-flight-panel" style="margin-bottom:12px;">
+      <span class="next-flight-icon">🛬</span>
+      <div class="next-flight-info">
+        <div class="nf-id">FL{{ next_landing.flight_id }}</div>
+        <div class="nf-airline">{{ next_landing.airline }}{% if next_landing.emergency %} <span class="atc-badge badge-emergency">EMRG</span>{% endif %}</div>
+      </div>
+      <div style="margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--text-muted)">RWY {{ next_landing.runway_id }}</div>
+    </div>
+    {% else %}
+    <div style="color:var(--text-muted); font-size:12px; padding:10px 0;">No pending landings</div>
+    {% endif %}
+
+    <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-muted); margin-bottom:4px;">
+      <span class="mono">{{ landing_count }} in queue</span>
+    </div>
+    <div class="queue-bar-wrap">
+      <div class="queue-bar-fill" style="width:{% widthratio landing_count 20 100 %}%; background:var(--amber);"></div>
+    </div>
+
+    <form method="post" action="{% url 'process_landing' %}" style="margin-top:12px;">
+      {% csrf_token %}
+      <button type="submit" class="btn-atc btn-amber" style="width:100%; justify-content:center;">
+        <i class="bi bi-arrow-down-circle"></i> PROCESS LANDING
+      </button>
+    </form>
+  </div>
+
+  <!-- Takeoff Queue -->
+  <div class="atc-card">
+    <div class="atc-card-header"><span class="dot" style="background:var(--cyan)"></span> TAKEOFF QUEUE</div>
+    {% if next_takeoff %}
+    <div class="next-flight-panel" style="margin-bottom:12px;">
+      <span class="next-flight-icon">🛫</span>
+      <div class="next-flight-info">
+        <div class="nf-id">FL{{ next_takeoff.flight_id }}</div>
+        <div class="nf-airline">{{ next_takeoff.airline }}{% if next_takeoff.emergency %} <span class="atc-badge badge-emergency">EMRG</span>{% endif %}</div>
+      </div>
+      <div style="margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--text-muted)">RWY {{ next_takeoff.runway_id }}</div>
+    </div>
+    {% else %}
+    <div style="color:var(--text-muted); font-size:12px; padding:10px 0;">No pending takeoffs</div>
+    {% endif %}
+
+    <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-muted); margin-bottom:4px;">
+      <span class="mono">{{ takeoff_count }} in queue</span>
+    </div>
+    <div class="queue-bar-wrap">
+      <div class="queue-bar-fill" style="width:{% widthratio takeoff_count 20 100 %}%; background:var(--cyan);"></div>
+    </div>
+
+    <form method="post" action="{% url 'process_takeoff' %}" style="margin-top:12px;">
+      {% csrf_token %}
+      <button type="submit" class="btn-atc btn-blue" style="width:100%; justify-content:center;">
+        <i class="bi bi-arrow-up-circle"></i> PROCESS TAKEOFF
+      </button>
+    </form>
+  </div>
+
+  <!-- Standby — now links to Standby Manager -->
+  <div class="atc-card">
+    <div class="atc-card-header"><span class="dot" style="background:var(--text-muted)"></span> STANDBY QUEUE</div>
+    <div style="text-align:center; padding: 16px 0 12px;">
+      <div style="font-family:var(--mono); font-size:36px; color:var(--text-secondary);">{{ standby_count }}</div>
+      <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">flights on standby</div>
+    </div>
+    <div class="queue-bar-wrap" style="margin-bottom:12px;">
+      <div class="queue-bar-fill" style="width:{% widthratio standby_count 20 100 %}%; background:var(--text-muted);"></div>
+    </div>
+    <!-- ✅ Changed: now opens Standby Manager instead of Queues -->
+    <a href="{% url 'standby_manage' %}" class="btn-atc btn-cyan" style="width:100%; justify-content:center; text-decoration:none;">
+      <i class="bi bi-pencil-square"></i> MANAGE STANDBY
+    </a>
+  </div>
+
+</div>
+
+<!-- Bottom row -->
+<div class="grid-2-bottom">
+
+  <!-- Recent Flights -->
+  <div class="atc-card">
+    <div class="atc-card-header"><span class="dot"></span> RECENT FLIGHTS</div>
+    <div class="table-wrap">
+      <table class="atc-table">
+        <thead>
+          <tr><th>ID</th><th>Airline</th><th>Status</th><th>Time</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for f in recent_flights %}
+          <tr>
+            <td class="flight-id">{{ f.flight_id }}</td>
+            <td class="airline-name">{{ f.airline }}</td>
+            <td>{% include 'port/_status_badge.html' with status=f.status %}</td>
+            <td class="mono" style="font-size:11px; color:var(--text-muted);">{{ f.formatted_time }}</td>
+            <td><a href="{% url 'flight_detail' f.pk %}" class="btn-atc btn-ghost" style="padding:3px 8px; font-size:10px;">VIEW</a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" style="color:var(--text-muted); text-align:center; padding:20px;">No flights recorded yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px; text-align:right;">
+      <a href="{% url 'flight_list' %}" class="btn-atc btn-ghost" style="font-size:11px;">All Flights →</a>
+    </div>
+  </div>
+
+  <!-- Activity Log -->
+  <div class="atc-card">
+    <div class="atc-card-header"><span class="dot"></span> ACTIVITY LOG</div>
+    {% for log in recent_logs %}
+    <div class="log-item">
+      <span class="log-dot" style="background: {% if 'Landed' in log.new_status %}var(--green){% elif 'Departed' in log.new_status %}var(--blue){% elif 'Cancelled' in log.new_status %}var(--red){% else %}var(--amber){% endif %};"></span>
+      <div style="flex:1; min-width:0;">
+        <div class="log-msg" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ log.message|default:log }}</div>
+        <div class="log-time">{{ log.timestamp|date:"H:i:s" }} — FL{{ log.flight.flight_id }}</div>
+      </div>
+    </div>
+    {% empty %}
+    <div style="color:var(--text-muted); font-size:12px; padding:12px 0;">No activity yet</div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

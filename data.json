@@ -1,0 +1,184 @@
+[
+  {
+    "model": "port.flight",
+    "pk": 1,
+    "fields": {
+      "flight_id": 201,
+      "airline": "PIA",
+      "status": "landing",
+      "emergency": false,
+      "time": 480,
+      "date_day": 120,
+      "runway_id": 1,
+      "created_at": "2026-03-29T08:00:00Z",
+      "processed_at": null
+    }
+  },
+  {
+    "model": "port.flight",
+    "pk": 2,
+    "fields": {
+      "flight_id": 202,
+      "airline": "Emirates",
+      "status": "takeoff",
+      "emergency": true,
+      "time": 510,
+      "date_day": 120,
+      "runway_id": 2,
+      "created_at": "2026-03-29T08:10:00Z",
+      "processed_at": null
+    }
+  },
+  {
+    "model": "port.flight",
+    "pk": 3,
+    "fields": {
+      "flight_id": 203,
+      "airline": "Qatar Airways",
+      "status": "StandBy",
+      "emergency": false,
+      "time": 530,
+      "date_day": 120,
+      "runway_id": 3,
+      "created_at": "2026-03-29T08:20:00Z",
+      "processed_at": null
+    }
+  },
+  {
+    "model": "port.flight",
+    "pk": 4,
+    "fields": {
+      "flight_id": 204,
+      "airline": "Turkish Airlines",
+      "status": "landing",
+      "emergency": false,
+      "time": 560,
+      "date_day": 121,
+      "runway_id": 1,
+      "created_at": "2026-03-29T09:00:00Z",
+      "processed_at": null
+    }
+  },
+  {
+    "model": "port.flight",
+    "pk": 5,
+    "fields": {
+      "flight_id": 205,
+      "airline": "AirBlue",
+      "status": "Cancelled",
+      "emergency": false,
+      "time": 600,
+      "date_day": 121,
+      "runway_id": 2,
+      "created_at": "2026-03-29T09:15:00Z",
+      "processed_at": "2026-03-29T09:30:00Z"
+    }
+  },
+  {
+    "model": "port.flight",
+    "pk": 6,
+    "fields": {
+      "flight_id": 206,
+      "airline": "Etihad",
+      "status": "Departed",
+      "emergency": false,
+      "time": 630,
+      "date_day": 121,
+      "runway_id": 3,
+      "created_at": "2026-03-29T09:30:00Z",
+      "processed_at": "2026-03-29T09:45:00Z"
+    }
+  },
+  {
+    "model": "port.flight",
+    "pk": 7,
+    "fields": {
+      "flight_id": 207,
+      "airline": "Lufthansa",
+      "status": "StandBy",
+      "emergency": false,
+      "time": 700,
+      "date_day": 122,
+      "runway_id": 1,
+      "created_at": "2026-03-29T10:00:00Z",
+      "processed_at": null
+    }
+  },
+  {
+    "model": "port.flight",
+    "pk": 8,
+    "fields": {
+      "flight_id": 208,
+      "airline": "British Airways",
+      "status": "landing",
+      "emergency": true,
+      "time": 720,
+      "date_day": 122,
+      "runway_id": 2,
+      "created_at": "2026-03-29T10:15:00Z",
+      "processed_at": null
+    }
+  },
+
+  {
+    "model": "port.runway",
+    "pk": 1,
+    "fields": {
+      "runway_id": 1,
+      "status": "busy",
+      "assigned_to": 1
+    }
+  },
+  {
+    "model": "port.runway",
+    "pk": 2,
+    "fields": {
+      "runway_id": 2,
+      "status": "busy",
+      "assigned_to": 2
+    }
+  },
+  {
+    "model": "port.runway",
+    "pk": 3,
+    "fields": {
+      "runway_id": 3,
+      "status": "free",
+      "assigned_to": null
+    }
+  },
+
+  {
+    "model": "port.flightlog",
+    "pk": 1,
+    "fields": {
+      "flight": 1,
+      "old_status": "StandBy",
+      "new_status": "landing",
+      "message": "Landing initiated",
+      "timestamp": "2026-03-29T08:05:00Z"
+    }
+  },
+  {
+    "model": "port.flightlog",
+    "pk": 2,
+    "fields": {
+      "flight": 2,
+      "old_status": "StandBy",
+      "new_status": "takeoff",
+      "message": "Emergency takeoff",
+      "timestamp": "2026-03-29T08:12:00Z"
+    }
+  },
+  {
+    "model": "port.flightlog",
+    "pk": 3,
+    "fields": {
+      "flight": 5,
+      "old_status": "StandBy",
+      "new_status": "Cancelled",
+      "message": "Technical issue",
+      "timestamp": "2026-03-29T09:25:00Z"
+    }
+  }
+]
